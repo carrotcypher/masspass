@@ -2,7 +2,7 @@
 
 MassPass is a website mass-password reset helper.
 
-[Access the live github page hosted version here](https://carrotcypher.github.io/masspas) or run it locally to be safest.
+[Access the live github page hosted version here](https://carrotcypher.github.io/masspass) or run it locally to be safest.
 
 ## Problem
 
