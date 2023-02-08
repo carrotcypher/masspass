@@ -3,16 +3,7 @@
     <head>
         <title>MassPass</title>
     
-        <script src="https://raw.githubusercontent.com/carrotcypher/password-reset-urls/main/password-reset-urls.js">
-            /***
-            This pulls a list of known password reset URLs from the https://github.com/carrotcypher/password-reset-urls project
-            and stores them inside the password_reset_urls Javascript object for easy access
-
-            Ex. password_reset_urls["google.com"] would return "myaccount.google.com/signinoptions/password"
-
-            ***/
-        </script>
-        
+        <script src="https://raw.githubusercontent.com/carrotcypher/password-reset-urls/main/password-reset-urls.js"></script>
         <script>
             
             function isJson(str) {
@@ -81,8 +72,8 @@
             function find_password_change_page(url) {
 
                 
-                if (list_of_password_change_urls[url]) {
-                    return list_of_password_change_urls[url]
+                if (password_reset_urls[url]) {
+                    return password_reset_urls[url]
                 } else {
                     return url;
 
@@ -130,23 +121,29 @@
     </head>
     <body>
         
-        <div style="display:inline-block">
-        
-            <textarea name="passwd_json_list" id="passwd_json_list" rows="10" cols="30"></textarea><br>
+        <div style="display:inline-block; padding:50px; width:250px">
+            <h2>Load</h2>
+            <p>
+                Copy/paste your Bitwarden<br>
+                exported JSON vault contents<br>
+                here and press the "Load" button<br></p>
+            <textarea name="passwd_json_list" id="passwd_json_list" rows="10" cols="30"></textarea><br><br>
             <input type=button value="Load" onClick="load_pass(document.getElementById('passwd_json_list').value)">
                 
         </div>
         
-        <div style="display:inline-block">
-        
-            <textarea name="website_list" id="website_list" rows="10" cols="30"></textarea><br>
+        <div style="display:inline-block; padding:50px; width:250px">
+            <h2>Domains</h2>
+            <p>
+                This lists all domains from the imported file. Click Start to begin the process.<br></p>
+            <textarea name="website_list" id="website_list" disabled=true rows="10" cols="30"></textarea><br><br>
             <input type=button value="Start" onClick="start_changing(document.getElementById('website_list').value)">
                 
         </div>
         
-        <div style="display:inline-block">
-        
-            <div style="border:1px black solid; height:150px; width:200px" name="current_site" id="current_site"></div><br>
+        <div style="display:inline-block; padding:50px; width:250px">
+            <h2>Current</h2>
+            <div style="border:1px black solid; height:150px; width:200px; padding:20px" name="current_site" id="current_site"></div><br>
             <input type=button value="Next" onClick="start_changing(document.getElementById('website_list').value)">
                 
         </div>
