@@ -2,6 +2,8 @@
 
 MassPass is a website mass-password reset helper.
 
+[Access the live github page hosted version here](https://carrotcypher.github.io/masspas) or run it locally to be safest.
+
 ## Problem
 
 Good password management and sanity demands a unique password for each service and website we use. As password managers become more common for storing passwords for various websites, the amount of unique passwords stored for each user increases, often into the hundreds.
