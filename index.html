@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MassPass</title>
+    
+        <script>
+            
+            function isJson(str) {
+                try {
+                    JSON.parse(str);
+                } catch (e) {
+                    return false;
+                }
+                return true;
+            }        
+
+            
+            // Taken from https://codepen.io/martinkrulltott/pen/GWWWQj
+            function extractDomain(url) {
+              var domain;
+              //find & remove protocol (http, ftp, etc.) and get domain
+              if (url.indexOf("://") > -1) {
+                domain = url.split('/')[2];
+              }
+              else {
+                domain = url.split('/')[0];
+              }
+
+              //find & remove www
+              if (domain.indexOf("www.") > -1) { 
+                domain = domain.split('www.')[1];
+              }
+
+              domain = domain.split(':')[0]; //find & remove port number
+              domain = domain.split('?')[0]; //find & remove url params
+
+              return domain;
+            }
+
+            
+            function load_pass(passwd_json_list) {
+                if (!isJson(passwd_json_list)) {
+                    alert("This is invalid JSON");
+                } else {
+                    passwd_json_list = JSON.parse(passwd_json_list)
+
+                    website_list.value=""
+                    
+                    list_of_sites = []
+                    
+                    for(var key in passwd_json_list["items"]) {
+                        if (passwd_json_list["items"][key]["login"]["uris"]) {
+                            if (passwd_json_list["items"][key]["login"]["uris"][0]) {
+                                if (passwd_json_list["items"][key]["login"]["uris"][0]["uri"]) {
+                                    website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
+                                    
+                                    list_of_sites.push(extractDomain(website));
+                                }
+                            }
+                        }
+                    }
+                    for(var key2 in list_of_sites) {
+                        website_list.value=website_list.value+list_of_sites[key2]+"\n"
+                    }
+                
+                    
+                }
+            }
+
+
+            function find_password_change_page(url) {
+
+                
+                if (list_of_password_change_urls[url]) {
+                    return list_of_password_change_urls[url]
+                } else {
+                    return url;
+
+                }
+            }
+            
+            
+            function start_changing(website_url_list) {
+
+                list_of_sites = website_url_list.split("\n");
+
+                
+                /// List all domains
+
+                /***
+
+                for (var key3 in list_of_sites) {
+                    if (list_of_sites[key3]) {
+                        
+                    }
+                    console.log(list_of_sites[key3])
+                }
+
+                ***/
+                
+                current_site.innerHTML = list_of_sites[0]
+                window.open("https://" + find_password_change_page(list_of_sites[0]), '_blank');
+                list_of_sites.shift()
+                website_list.value=""
+                for(var key2 in list_of_sites) {
+                    website_list.value=website_list.value+list_of_sites[key2]+"\n"
+                }
+                
+                
+
+            }
+
+            function init_script() {
+                const website_list = document.getElementById("website_list")
+                const current_site = document.getElementById("current_site")
+                website_list.value = ""
+                current_site.innerHTML = ""
+            }
+        </script>
+    </head>
+    <body>
+        
+        <div style="display:inline-block">
+        
+            <textarea name="passwd_json_list" id="passwd_json_list" rows="10" cols="30"></textarea><br>
+            <input type=button value="Load" onClick="load_pass(document.getElementById('passwd_json_list').value)">
+                
+        </div>
+        
+        <div style="display:inline-block">
+        
+            <textarea name="website_list" id="website_list" rows="10" cols="30"></textarea><br>
+            <input type=button value="Start" onClick="start_changing(document.getElementById('website_list').value)">
+                
+        </div>
+        
+        <div style="display:inline-block">
+        
+            <div style="border:1px black solid; height:150px; width:200px" name="current_site" id="current_site"></div><br>
+            <input type=button value="Next" onClick="start_changing(document.getElementById('website_list').value)">
+                
+        </div>
+        
+        <script>init_script()</script>
+    </body>
+
+</html>
