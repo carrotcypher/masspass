@@ -3,6 +3,16 @@
     <head>
         <title>MassPass</title>
     
+        <script src="https://raw.githubusercontent.com/carrotcypher/password-reset-urls/main/password-reset-urls.js">
+            /***
+            This pulls a list of known password reset URLs from the https://github.com/carrotcypher/password-reset-urls project
+            and stores them inside the password_reset_urls Javascript object for easy access
+
+            Ex. password_reset_urls["google.com"] would return "myaccount.google.com/signinoptions/password"
+
+            ***/
+        </script>
+        
         <script>
             
             function isJson(str) {
