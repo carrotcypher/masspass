@@ -78,12 +78,17 @@
                     passwd_json_list = JSON.parse(passwd_json_list);
                     website_list.value = "";
                     list_of_sites = [];
+                     // Define a set of invalid website values
+                    const invalidWebsites = new Set(["http://","https://", "www.", "", "none", "http://none", "file:/*"]);
+
 
                     for (const key in passwd_json_list["items"]) {
                         if (passwd_json_list["items"]?.[key]?.["login"]?.["uris"]?.[0]?.["uri"]) {
-
                             website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
-                            list_of_sites.push(extractDomain(website));
+                            // Check if website is not null or empty or no FQD
+                            if (website && !invalidWebsites.has(website)) {
+                                list_of_sites.push(extractDomain(website));
+                            }
                         }
                     }
 
