@@ -72,6 +72,7 @@
             }
 
             function load_pass(passwd_json_list) {
+<<<<<<< Updated upstream
                 if (!isJson(passwd_json_list)) {
                     alert("This is invalid JSON");
                 } else {
@@ -84,14 +85,39 @@
 
                             website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
                             list_of_sites.push(extractDomain(website));
+=======
+                    if (!isJson(passwd_json_list)) {
+                        alert("This is invalid JSON");
+                    } else {
+                        passwd_json_list = JSON.parse(passwd_json_list);
+
+                        // Check if the "Sort By Date" checkbox is checked
+                        const sortByDate = document.getElementById("sort_by_date").checked;
+                        if (sortByDate) {
+                            passwd_json_list.items = sortByRevisionDate(passwd_json_list);
+                        }
+
+                        website_list.value = "";
+                        list_of_sites = [];
+                        // Define a set of invalid website values
+                        const invalidWebsites = new Set(["http://", "https://", "www.", "", "none", "http://none", "file:/*"]);
+
+                        for (const key in passwd_json_list["items"]) {
+                            if (passwd_json_list["items"]?.[key]?.["login"]?.["uris"]?.[0]?.["uri"]) {
+                                website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
+                                // Check if website is not null or empty or no FQD
+                                if (website && !invalidWebsites.has(website)) {
+                                    list_of_sites.push(extractDomain(website));
+                                }
+                            }
+>>>>>>> Stashed changes
+                        }
+
+                        for (const key in list_of_sites) {
+                            website_list.value = website_list.value + list_of_sites[key] + "\n";
                         }
                     }
-
-                    for (const key in list_of_sites) {
-                        website_list.value = website_list.value + list_of_sites[key] + "\n";
-                    }
                 }
-            }
 
             function find_password_change_page(url) {
                 if (password_reset_urls[url]) {
@@ -116,6 +142,24 @@
                 }
             }
 
+            function sortByRevisionDate(passwd_json_list) {
+                 // Ensure the "items" array exists
+                    if (!passwd_json_list.items || !Array.isArray(passwd_json_list.items)) {
+                        alert("Invalid data format: Missing 'items' array");
+                        return [];
+                    }
+
+                    // Sort the items by revisionDate in ascending order
+                    const sortedItems = passwd_json_list.items.sort((a, b) => {
+                        const dateA = new Date(a.revisionDate || 0); // Default to 0 if revisionDate is missing
+                        const dateB = new Date(b.revisionDate || 0);
+                        return dateA - dateB;
+                        // return dateB - dateA; // Descending order
+                    });
+
+                    return sortedItems;
+                }
+
             function init_script() {
                 const website_list = document.getElementById("website_list");
                 const current_site = document.getElementById("current_site");
@@ -133,6 +177,9 @@
 
         <div style="display:inline-block; padding:50px; width:250px">
             <h2>Load</h2>
+            <input type="checkbox" id="sort_by_date" name="sort_by_date">
+            <label for="sort_by_date">Sort By Date</label><br><br>
+        
             <p>
                 Copy/paste your Bitwarden<br>
                 exported JSON vault contents<br>
