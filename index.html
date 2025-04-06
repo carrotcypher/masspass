@@ -1,160 +1,203 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>MassPass</title>
 
-        <script>
-            let password_reset_urls = {};
+<head>
+    <title>MassPass</title>
 
-            !async function () {
-                try {
-                    const response = await fetch("https://raw.githubusercontent.com/apple/password-manager-resources/main/quirks/change-password-URLs.json");
-                    password_reset_urls = await response.json();
-                } catch {
-                    password_reset_urls = {};
-                }
-            }();
-        </script>
+    <script>
+        let password_reset_urls = {};
 
-        <script>
-            function isIP(address) {
-                const parts = address.split('.');
+        !async function () {
+            try {
+                const response = await fetch("https://raw.githubusercontent.com/apple/password-manager-resources/main/quirks/change-password-URLs.json");
+                password_reset_urls = await response.json();
+            } catch {
+                password_reset_urls = {};
+            }
+        }();
+    </script>
 
-                if (parts.length !== 4) {
+    <script>
+        function isIP(address) {
+            const parts = address.split('.');
+
+            if (parts.length !== 4) {
+                return false;
+            }
+
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+
+                if (!/^\d+$/.test(part)) {
                     return false;
                 }
 
-                for (let i = 0; i < parts.length; i++) {
-                    const part = parts[i];
-
-                    if (!/^\d+$/.test(part)) {
+                const num = parseInt(part, 10);
+                if (num < 0 || num > 255) {
                     return false;
+                }
+            }
+
+            return true;
+        }
+
+        function isJson(str) {
+            try {
+                JSON.parse(str);
+            } catch (e) {
+                return false;
+            }
+            return true;
+        }
+
+        // Taken from https://codepen.io/martinkrulltott/pen/GWWWQj
+        function extractDomain(url) {
+            let domain;
+            //find & remove protocol (http, ftp, etc.) and get domain
+            if (url.indexOf("://") > -1) {
+                domain = url.split('/')[2];
+            }
+            else {
+                domain = url.split('/')[0];
+            }
+
+            //find & remove www
+            if (domain.indexOf("www.") > -1) {
+                domain = domain.split('www.')[1];
+            }
+
+            domain = domain.split(':')[0]; //find & remove port number
+            domain = domain.split('?')[0]; //find & remove url params
+
+            return domain;
+        }
+
+        function load_pass(passwd_json_list) {
+            if (!isJson(passwd_json_list)) {
+                alert("This is invalid JSON");
+            } else {
+                passwd_json_list = JSON.parse(passwd_json_list);
+                website_list.value = "";
+                list_of_sites = [];
+
+                for (const key in passwd_json_list["items"]) {
+                    if (passwd_json_list["items"]?.[key]?.["login"]?.["uris"]?.[0]?.["uri"]) {
+                        website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
+                        list_of_sites.push(extractDomain(website));
                     }
-
-                    const num = parseInt(part, 10);
-                    if (num < 0 || num > 255) {
-                    return false;
-                    }
                 }
 
-                return true;
-            }
-
-            function isJson(str) {
-                try {
-                    JSON.parse(str);
-                } catch (e) {
-                    return false;
-                }
-                return true;
-            }
-
-            // Taken from https://codepen.io/martinkrulltott/pen/GWWWQj
-            function extractDomain(url) {
-                let domain;
-                //find & remove protocol (http, ftp, etc.) and get domain
-                if (url.indexOf("://") > -1) {
-                    domain = url.split('/')[2];
-                }
-                else {
-                    domain = url.split('/')[0];
+                // Check if the "Sort By Date" checkbox is checked
+                const sortByDate = document.getElementById("sort_by_date").checked;
+                if (sortByDate) {
+                    passwd_json_list.items = sortByRevisionDate(passwd_json_list);
                 }
 
-                //find & remove www
-                if (domain.indexOf("www.") > -1) {
-                    domain = domain.split('www.')[1];
-                }
+                website_list.value = "";
+                list_of_sites = [];
+                const invalidWebsites = new Set(["http://", "https://", "www.", "", "none", "http://none", "file:/*"]);
 
-                domain = domain.split(':')[0]; //find & remove port number
-                domain = domain.split('?')[0]; //find & remove url params
-
-                return domain;
-            }
-
-            function load_pass(passwd_json_list) {
-                if (!isJson(passwd_json_list)) {
-                    alert("This is invalid JSON");
-                } else {
-                    passwd_json_list = JSON.parse(passwd_json_list);
-                    website_list.value = "";
-                    list_of_sites = [];
-
-                    for (const key in passwd_json_list["items"]) {
-                        if (passwd_json_list["items"]?.[key]?.["login"]?.["uris"]?.[0]?.["uri"]) {
-
-                            website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
+                for (const key in passwd_json_list["items"]) {
+                    if (passwd_json_list["items"]?.[key]?.["login"]?.["uris"]?.[0]?.["uri"]) {
+                        website = passwd_json_list["items"][key]["login"]["uris"][0]["uri"];
+                        if (website && !invalidWebsites.has(website)) {
                             list_of_sites.push(extractDomain(website));
                         }
                     }
-
-                    for (const key in list_of_sites) {
-                        website_list.value = website_list.value + list_of_sites[key] + "\n";
-                    }
                 }
-            }
-
-            function find_password_change_page(url) {
-                if (password_reset_urls[url]) {
-                    return password_reset_urls[url];
-                } else if (url.split(".").length > 1 && !isIP(url) && password_reset_urls[url.substring(url.indexOf(".") + 1)]) {
-                    return password_reset_urls[url.substring(url.indexOf(".") + 1)];
-                } else {
-                    return "https://" + url;
-                }
-            }
-
-            function start_changing(website_url_list) {
-                list_of_sites = website_url_list.split("\n");
-
-                current_site.innerHTML = list_of_sites[0]
-                window.open(find_password_change_page(list_of_sites[0]), '_blank');
-                list_of_sites.shift();
-                website_list.value = "";
 
                 for (const key in list_of_sites) {
                     website_list.value = website_list.value + list_of_sites[key] + "\n";
                 }
             }
+        }
 
-            function init_script() {
-                const website_list = document.getElementById("website_list");
-                const current_site = document.getElementById("current_site");
-                website_list.value = "";
-                current_site.innerHTML = "";
+        function find_password_change_page(url) {
+            if (password_reset_urls[url]) {
+                return password_reset_urls[url];
+            } else if (url.split(".").length > 1 && !isIP(url) && password_reset_urls[url.substring(url.indexOf(".") + 1)]) {
+                return password_reset_urls[url.substring(url.indexOf(".") + 1)];
+            } else {
+                return "https://" + url;
             }
-        </script>
-    </head>
+        }
 
-    <body>
-        <div style="display:block; padding:50px">
-            <h2>MassPass</h2>
-            <p>MassPass is a website mass-password reset helper. <a href="https://github.com/carrotcypher/masspass/">Check the code on Github here.</a></p>
-        </div>
+        function start_changing(website_url_list) {
+            list_of_sites = website_url_list.split("\n");
 
-        <div style="display:inline-block; padding:50px; width:250px">
-            <h2>Load</h2>
-            <p>
-                Copy/paste your Bitwarden<br>
-                exported JSON vault contents<br>
-                here and press the "Load" button<br></p>
-            <textarea name="passwd_json_list" id="passwd_json_list" rows="10" cols="30"></textarea><br><br>
-            <input type=button value="Load" onClick="load_pass(document.getElementById('passwd_json_list').value)">
-        </div>
+            current_site.innerHTML = list_of_sites[0]
+            window.open(find_password_change_page(list_of_sites[0]), '_blank');
+            list_of_sites.shift();
+            website_list.value = "";
 
-        <div style="display:inline-block; padding:50px; width:250px">
-            <h2>Domains</h2>
-            <p>
-                This lists all domains from the imported file. Click Start to begin the process.<br></p>
-            <textarea name="website_list" id="website_list" disabled=true rows="10" cols="30"></textarea><br><br>
-            <input type=button value="Start" onClick="start_changing(document.getElementById('website_list').value)">
-        </div>
+            for (const key in list_of_sites) {
+                website_list.value = website_list.value + list_of_sites[key] + "\n";
+            }
+        }
 
-        <div style="display:inline-block; padding:50px; width:250px">
-            <h2>Current</h2>
-            <div style="border:1px black solid; height:150px; width:200px; padding:20px" name="current_site" id="current_site"></div><br>
-            <input type=button value="Next" onClick="start_changing(document.getElementById('website_list').value)">
-        </div>
+        function sortByRevisionDate(passwd_json_list) {
+            // Ensure the "items" array exists
+            if (!passwd_json_list.items || !Array.isArray(passwd_json_list.items)) {
+                alert("Invalid data format: Missing 'items' array");
+                return [];
+            }
 
-        <script>init_script()</script>
-    </body>
+            // Sort the items by revisionDate in ascending order
+            const sortedItems = passwd_json_list.items.sort((a, b) => {
+                const dateA = new Date(a.revisionDate || 0); // Default to 0 if revisionDate is missing
+                const dateB = new Date(b.revisionDate || 0);
+                return dateA - dateB;
+                // return dateB - dateA; // Descending order
+            });
+
+            return sortedItems;
+        }
+
+        function init_script() {
+            const website_list = document.getElementById("website_list");
+            const current_site = document.getElementById("current_site");
+            website_list.value = "";
+            current_site.innerHTML = "";
+        }
+    </script>
+</head>
+
+<body>
+    <div style="display:block; padding:50px">
+        <h2>MassPass</h2>
+        <p>MassPass is a website mass-password reset helper. <a href="https://github.com/carrotcypher/masspass/">Check
+                the code on Github here.</a></p>
+    </div>
+
+    <div style="display:inline-block; padding:50px; width:250px">
+        <h2>Load</h2>
+        <input type="checkbox" id="sort_by_date" name="sort_by_date">
+        <label for="sort_by_date">Sort By Date</label><br><br>
+
+        <p>
+            Copy/paste your Bitwarden<br>
+            exported JSON vault contents<br>
+            here and press the "Load" button<br></p>
+        <textarea name="passwd_json_list" id="passwd_json_list" rows="10" cols="30"></textarea><br><br>
+        <input type=button value="Load" onClick="load_pass(document.getElementById('passwd_json_list').value)">
+    </div>
+
+    <div style="display:inline-block; padding:50px; width:250px">
+        <h2>Domains</h2>
+        <p>
+            This lists all domains from the imported file. Click Start to begin the process.<br></p>
+        <textarea name="website_list" id="website_list" disabled=true rows="10" cols="30"></textarea><br><br>
+        <input type=button value="Start" onClick="start_changing(document.getElementById('website_list').value)">
+    </div>
+
+    <div style="display:inline-block; padding:50px; width:250px">
+        <h2>Current</h2>
+        <div style="border:1px black solid; height:150px; width:200px; padding:20px" name="current_site"
+            id="current_site"></div><br>
+        <input type=button value="Next" onClick="start_changing(document.getElementById('website_list').value)">
+    </div>
+
+    <script>init_script()</script>
+</body>
+
 </html>
